@@ -1,0 +1,18 @@
+{
+  "name": "prjctr-redis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "finalhandler": "^1.2.0",
+    "pg": "^8.10.0",
+    "redis": "^4.6.5",
+    "router": "^1.3.8"
+  }
+}

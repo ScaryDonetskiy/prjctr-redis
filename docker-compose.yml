@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  redis-master:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-master-data:/data
+
+  redis-slave:
+    image: redis:latest
+    ports:
+      - "63791:6379"
+    command: redis-server --slaveof redis-master 6379
+    volumes:
+      - redis-slave-data:/data
+    depends_on:
+      - redis-master
+
+  redis-sentinel:
+    image: redis:latest
+    ports:
+      - "26379:26379"
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./.infrastructure/sentinel.conf:/etc/redis/sentinel.conf
+    links:
+      - redis-master:redis-master
+    depends_on:
+      - redis-master
+      - redis-slave
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: default
+
+  pgbouncer:
+    image: bitnami/pgbouncer:latest
+    ports:
+      - "6432:6432"
+    environment:
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PASSWORD: default
+    depends_on:
+      - postgres
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./.infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  pgbouncer-exporter:
+    image: spreaker/prometheus-pgbouncer-exporter:latest
+    ports:
+      - "9127:9127"
+    environment:
+      PGBOUNCER_EXPORTER_HOST: 0.0.0.0
+      PGBOUNCER_HOST: pgbouncer
+      PGBOUNCER_USER: postgres
+      PGBOUNCER_PASS: default
+    depends_on:
+      - pgbouncer
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./.infrastructure/grafana/provisioning:/etc/grafana/provisioning
+      - ./.infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
+  service:
+    build:
+      context: .
+      dockerfile: .infrastructure/Dockerfile
+    volumes:
+      - .:/app:cached
+    ports:
+      - "8000:8000"
+    restart: on-failure
+    depends_on:
+      - redis-master
+      - pgbouncer
+
+volumes:
+  redis-master-data:
+  redis-slave-data:
