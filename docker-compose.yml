@@ -51,6 +51,7 @@ services:
       - "9090:9090"
     volumes:
       - ./.infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
 
   pgbouncer-exporter:
     image: spreaker/prometheus-pgbouncer-exporter:latest
@@ -63,6 +64,15 @@ services:
       PGBOUNCER_PASS: default
     depends_on:
       - pgbouncer
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: redis://redis-master:6379
+    depends_on:
+      - redis-master
 
   grafana:
     image: grafana/grafana:latest
@@ -88,8 +98,10 @@ services:
     restart: on-failure
     depends_on:
       - redis-master
+      - redis-sentinel
       - pgbouncer
 
 volumes:
   redis-master-data:
   redis-slave-data:
+  prometheus-data:

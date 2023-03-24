@@ -21,7 +21,7 @@ let redisClientConnectPromise = redisClient.connect();
 
 async function getWrap(code) {
     let ttl = await redisClient.ttl(code);
-    if (ttl > 0 && ttl < 60 && Math.random() < 0.5) {
+    if (ttl > 0 && ttl < 90 && Math.random() < 0.3) {
         return null;
     }
 
@@ -34,7 +34,7 @@ Promise.all([pgClientConnectPromise, redisClientConnectPromise]).then(() => {
         getWrap(code).then(value => {
             if (null === value) {
                 pgClient.query('SELECT $1::text as message', [code], (err, result) => {
-                    redisClient.set(code, result.rows[0].message, {EX: 300});
+                    redisClient.set(code, result.rows[0].message, {EX: 180});
                     res.end(result.rows[0].message);
                 });
             } else {
