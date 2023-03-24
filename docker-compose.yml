@@ -25,11 +25,8 @@ services:
     command: redis-sentinel /etc/redis/sentinel.conf
     volumes:
       - ./.infrastructure/sentinel.conf:/etc/redis/sentinel.conf
-    links:
-      - redis-master:redis-master
     depends_on:
       - redis-master
-      - redis-slave
 
   postgres:
     image: postgres:latest
